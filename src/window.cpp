@@ -3,14 +3,14 @@
 
 
 EWindow::EWindow(const bool forceWindowSize, const bool forceWindowMode,
-                 unsigned int width, unsigned int height,
-                 const std::string& title,const int8_t windowMode,
+                 unsigned int width, const unsigned int height,
+                 const std::string& title,const WindowMode windowMode,
                  const int windowGroupId)
     : groupId(windowGroupId),
       title(title.empty() ?  DEFAULT_WINDOW_TITLE : title),
       size{width <= 0 ? DEFAULT_WINDOW_WIDTH : width, height <= 0 ? DEFAULT_WINDOW_HEIGHT : height},
       forceWindowSize(forceWindowSize),
-      mode(windowMode == -1 ? DEFAULT_WINDOW_MODE : static_cast<WindowMode>(windowMode)),
+      mode(windowMode),
       forceWindowMode(forceWindowMode)
 
 {
@@ -24,5 +24,5 @@ EWindow::EWindow(const bool forceWindowSize, const bool forceWindowMode,
 }
 
 EWindow::~EWindow() {
-  std::cout << "Window is destroyed\n";
+  std::cout << "Window is destroyed!" << std::endl;
 }

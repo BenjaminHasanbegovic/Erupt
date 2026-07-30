@@ -15,6 +15,7 @@ EInstance::EInstance(bool forceWindowSize,bool forceWindowMode,
         this->vkDevice = std::make_unique<VulkanDevice>(this->vkInstance->getInstance(),static_cast<uint32_t>(preferredPhysicalDevice));
     }
 
+
     this->window = std::make_unique<EWindow>(forceWindowSize,forceWindowMode,windowWidth,windowHeight,appName,windowMode,windowGroupId);
 };
 
@@ -26,8 +27,10 @@ void EInstance::start() {
     EStepManager::init();
     std::cout << "Erupt instance started" << std::endl;
     this->vkDevice->createDevice();
+    this->window->create(this->vkInstance->getInstance());
+    this->vkAllocator = std::make_unique<VulkanAllocator>(this->vkInstance->getInstance(),this->vkDevice->getCurrentPhysicalDevice(),this->vkDevice->getLogicalDevice());
 };
 
-void EInstance::end() {
+void EInstance::end() const {
 delete this;
 }

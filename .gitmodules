@@ -1,0 +1,3 @@
+[submodule "src/vendor/VMA"]
+	path = src/vendor/VMA
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git

@@ -1,4 +1,8 @@
 #pragma once
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
+#include <iostream>
 #include <string>
 
 #define DEFAULT_WINDOW_WIDTH 1920
@@ -17,13 +21,18 @@ class EWindow {
     public:
     explicit EWindow(bool forceWindowSize,bool forceWindowMode,
         unsigned int width = DEFAULT_WINDOW_WIDTH, unsigned int height = DEFAULT_WINDOW_HEIGHT,
-       const std::string& title = DEFAULT_WINDOW_TITLE,const int8_t windowMode = static_cast<int8_t>(DEFAULT_WINDOW_MODE),
+       const std::string& title = DEFAULT_WINDOW_TITLE,WindowMode windowMode = DEFAULT_WINDOW_MODE,
          int windowGroupId = 0);
     ~EWindow();
+
+    void create(const VkInstance& vkInstance);
 
 private:
     int groupId{0};
     std::string title{DEFAULT_WINDOW_TITLE};
+
+    GLFWwindow* window{nullptr};
+    VkSurfaceKHR surface;
 
     unsigned int size[2]{DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT};
     bool forceWindowSize{false};

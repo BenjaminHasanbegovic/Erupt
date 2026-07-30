@@ -32,7 +32,7 @@ target_include_directories(VulkanMemoryAllocator INTERFACE $<BUILD_INTERFACE:${C
 
 if (CMAKE_VERSION VERSION_LESS "3.21")
     # https://cmake.org/cmake/help/latest/variable/PROJECT_IS_TOP_LEVEL.html
-    string(COMPARE EQUAL ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} PROJECT_IS_TOP_LEVEL)
+    string(COMPARE EQUAL . ${CMAKE_SOURCE_DIR} PROJECT_IS_TOP_LEVEL)
 endif()
 
 option(VMA_ENABLE_INSTALL "Install VulkanMemoryAllocator" ${PROJECT_IS_TOP_LEVEL})
@@ -40,7 +40,7 @@ if (VMA_ENABLE_INSTALL)
     include(GNUInstallDirs)
     include(CMakePackageConfigHelpers)
 
-    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    install(DIRECTORY "include" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     install(TARGETS VulkanMemoryAllocator EXPORT VulkanMemoryAllocatorConfig INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     install(EXPORT VulkanMemoryAllocatorConfig NAMESPACE "GPUOpen::" DESTINATION "share/cmake/VulkanMemoryAllocator")
 
@@ -51,7 +51,7 @@ if (VMA_ENABLE_INSTALL)
     if(VMA_BUILD_DOCUMENTATION)
         find_package(Doxygen REQUIRED)
         # set input and output files
-        set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
+        set(DOXYGEN_IN Doxyfile)
         set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
         # request to configure the file
         configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
@@ -62,7 +62,7 @@ if (VMA_ENABLE_INSTALL)
             COMMENT "Generating API documentation with Doxygen"
             VERBATIM
         )
-        install(DIRECTORY docs/ DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/VulkanMemoryAllocator" PATTERN ".nojekyll" EXCLUDE)
+        install(DIRECTORY docs DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/VulkanMemoryAllocator" PATTERN ".nojekyll" EXCLUDE)
     endif()
 
     option(VMA_BUILD_SAMPLES "Build samples")

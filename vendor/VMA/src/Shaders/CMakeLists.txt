@@ -29,9 +29,9 @@ if(NOT GLSL_VALIDATOR)
 endif()
 
 set(SHADERS
-    Shader.vert
-    Shader.frag
-    SparseBindingTest.comp
+        Shader.vert
+        Shader.frag
+        SparseBindingTest.comp
 )
 
 # Compile each shader using glslangValidator

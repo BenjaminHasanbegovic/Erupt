@@ -1,7 +1,9 @@
 #pragma once
+#define GLFW_INCLUDE_VULKAN
 #include <vulkan/vulkan.h>
 #include <string>
-
+#include <GLFW/glfw3.h>
+#include <iostream>
 
 class VulkanInstance{
  public:

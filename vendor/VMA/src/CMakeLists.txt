@@ -43,17 +43,17 @@ find_package(Vulkan REQUIRED)
 
 add_executable(VmaSample)
 target_sources(VmaSample PRIVATE
-    Common.cpp
-    Common.h
-    SparseBindingTest.cpp
-    SparseBindingTest.h
-    Tests.cpp
-    Tests.h
-    VmaUsage.cpp
-    VmaUsage.h
-    VolkUsage.cpp
-    VulkanSample.cpp
-    ../include/vk_mem_alloc.h
+        Common.cpp
+        Common.h
+        SparseBindingTest.cpp
+        SparseBindingTest.h
+        Tests.cpp
+        Tests.h
+        VmaUsage.cpp
+        VmaUsage.h
+        VolkUsage.cpp
+        VulkanSample.cpp
+        ../include/vk_mem_alloc.h
 )
 
 # Only link to Vulkan library if volk loader is not used, but always add Vulkan headers directory.
@@ -96,6 +96,6 @@ add_compile_definitions(UNICODE _UNICODE)
 add_compile_options(/permissive- /sdl /W3)
 
 # Set VmaSample as startup project
-set_property(DIRECTORY "${PROJECT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT "VmaSample")
+set_property(DIRECTORY "../../.." PROPERTY VS_STARTUP_PROJECT "VmaSample")
 
 set_target_properties(VmaSample PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")

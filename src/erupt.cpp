@@ -31,6 +31,8 @@ void EInstance::start() {
     if ( !this->vkDevice->hasPresentQueue(this->window->getVulkanSurface())) {
         throw std::runtime_error("The physical device doesn't support present queue!");
     }
+
+    this->vkSwapchain = std::make_unique<VulkanSwapchain>(this->vkDevice->getCurrentPhysicalDevice(),this->window->getVulkanSurface());
     this->vkAllocator = std::make_unique<VulkanAllocator>(this->vkInstance->getInstance(),this->vkDevice->getCurrentPhysicalDevice(),this->vkDevice->getLogicalDevice());
 };
 

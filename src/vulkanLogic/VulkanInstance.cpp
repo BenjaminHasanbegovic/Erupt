@@ -1,5 +1,4 @@
-#include "../../include/vulkanLogic/vulkanInstance.h"
-
+#include "../../include/vulkanLogic/VulkanInstance.h"
 
 
 VulkanInstance::VulkanInstance(const std::string& appName, const unsigned int appVersion) {

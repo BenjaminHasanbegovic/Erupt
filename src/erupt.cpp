@@ -28,6 +28,9 @@ void EInstance::start() {
     std::cout << "Erupt instance started" << std::endl;
     this->vkDevice->createDevice();
     this->window->create(this->vkInstance->getInstance());
+    if ( !this->vkDevice->hasPresentQueue(this->window->getVulkanSurface())) {
+        throw std::runtime_error("The physical device doesn't support present queue!");
+    }
     this->vkAllocator = std::make_unique<VulkanAllocator>(this->vkInstance->getInstance(),this->vkDevice->getCurrentPhysicalDevice(),this->vkDevice->getLogicalDevice());
 };
 

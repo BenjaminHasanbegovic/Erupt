@@ -25,6 +25,23 @@ VulkanDevice::~VulkanDevice() {
     std::cout << "Vulkan device destroyed!" << std::endl;
 }
 
+bool VulkanDevice::hasPresentQueue(const VkSurfaceKHR surface) {
+    std::cout << "Checking for physical device present queue support: ";
+    VkBool32 presentSupport{false};
+   for (uint32_t i = 0; i < physicalDeviceCount; i++) {
+       vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
+       if (presentSupport) {
+           presentQueueFamilyIndex = i;
+           std::cout << "The physical device support present queue,index : " << presentQueueFamilyIndex << std::endl;
+           break;
+       }
+   }
+    if (!presentSupport) {
+        std::cout << "the physical device doesn't support present queue! " << std::endl;
+    }
+    return presentSupport;
+};
+
 void VulkanDevice::createDevice() {
     std::cout << "Creating Vulkan device!" << std::endl;
     selectSuitablePhysicalDevice();
@@ -33,13 +50,13 @@ void VulkanDevice::createDevice() {
 }
 
 void VulkanDevice::selectSuitablePhysicalDevice() {
+    //Use the preferred physical device
     if (preferredPhysicalDevice != VK_NULL_HANDLE) {
         physicalDevice = preferredPhysicalDevice;
         std::cout << "Selected suitable physical device: " << currentPhysicalDeviceName << std::endl;
         return;
     }
-
-    uint32_t physicalDeviceCount{0};
+//Search for a suitable physical device
     vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
 
     if (physicalDeviceCount == 0) {
@@ -63,18 +80,23 @@ void VulkanDevice::selectSuitablePhysicalDevice() {
         vkGetPhysicalDeviceFeatures(currentDevice, &deviceFeatures);
         std::cout << "Checking " << "(" << deviceProperties.deviceID << ")" << deviceProperties.deviceName << ":" << std::flush;
 
-        uint32_t queueFamilyCount = 0;
+        uint32_t queueFamilyCount{0};
         vkGetPhysicalDeviceQueueFamilyProperties(currentDevice, &queueFamilyCount, nullptr);
-        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(currentDevice, &queueFamilyCount, queueFamilies.data());
+        std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(currentDevice, &queueFamilyCount, queueFamilyProperties.data());
         bool hasGraphicsQueue = false;
+        bool hasPresentQueue = false;
+        int i{0};
 
-        for (const auto& queueFamily : queueFamilies) {
+        //Get queue family proprieties for surface and graphics
+        for (const auto& queueFamily : queueFamilyProperties) {
             if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                graphicsQueueFamilyIndex = i;
                 hasGraphicsQueue = true;
                 std::cout << "found a graphics queue, "<< std::flush;
-                break;
             }
+
+            ++i;
         }
         if (!hasGraphicsQueue || !deviceFeatures.geometryShader) {
             std::cout << "missing geometry shader feature or there is no graphics queue, "<< std::flush;

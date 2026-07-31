@@ -18,14 +18,19 @@ EWindow::EWindow(const bool forceWindowSize, const bool forceWindowMode, const u
 }
 
 EWindow::~EWindow() {
+    vkDestroySurfaceKHR(surfaceInstance,surface,nullptr);
+    std::cout << "Surface is destroyed!" << std::endl;
+
     glfwDestroyWindow(window);
     window = nullptr;
     std::cout << "Window is destroyed!" << std::endl;
+
     glfwTerminate();
     std::cout << "Terminated GLFW!" << std::endl;
 }
 
 void EWindow::create(const VkInstance& vkInstance) {
+    surfaceInstance = vkInstance;
     window = glfwCreateWindow(static_cast<int>(this->size[0]), static_cast<int>(this->size[1]),
         title.c_str(), nullptr, nullptr);
 
@@ -35,7 +40,7 @@ void EWindow::create(const VkInstance& vkInstance) {
     }else {
         std::cout << "Created glfw window.\n" << "Window initialized,title: " << this->title << "\nCreating Vulkan window surface!" <<std::endl;
 
-        if (glfwCreateWindowSurface(vkInstance,window,nullptr,&surface) != VK_SUCCESS) {
+        if (glfwCreateWindowSurface(surfaceInstance,window,nullptr,&surface) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create Vulkan window surface!");
         }else {
             std::cout << "Created Vulkan window surface!" << std::endl;

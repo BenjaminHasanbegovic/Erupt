@@ -1,22 +1,22 @@
 #include "../../include/vulkanLogic/VulkanDevice.h"
 
-VulkanDevice::VulkanDevice(const VkInstance &instance):instance(instance) {
-    std::cout << "Vulkan device initialized." << std::endl;
-};
-
 VulkanDevice::VulkanDevice(const VkInstance &instance, const uint32_t preferredPhysicalDevice):instance(instance) {
-    std::cout << "Vulkan device initialized." << std::endl;
-    const auto physicalDevicesMap = getPhysicalDevicesInfo();
+    std::cout << "Initializing Vulkan device ..." << std::endl;
 
-    if (const auto physicalDeviceLocation = physicalDevicesMap.find(preferredPhysicalDevice);
-        physicalDeviceLocation != physicalDevicesMap.end()) {
+    if (preferredPhysicalDevice != -1) {
+        std::cout << "Locating the requested physical device." << std::endl;
+
+        const auto physicalDevicesMap = getPhysicalDevicesInfo();
+        const auto physicalDeviceLocation = physicalDevicesMap.find(preferredPhysicalDevice);
+        if ( physicalDeviceLocation != physicalDevicesMap.end()){}
+        //Execrate the needed data from the provided map
         this->currentPhysicalDeviceName = physicalDeviceLocation->second.first;
-        this->preferredPhysicalDevice= physicalDeviceLocation->second.second; // <--- Here is your device!
+        this->preferredPhysicalDevice= physicalDeviceLocation->second.second;
 
-        std::cout << "Successfully retrieved the requested physical device : " <<  this->currentPhysicalDeviceName << std::endl;
-    } else {
-        std::cerr << "Device ID not found in the map!" << std::endl;
+        std::cout << "Successfully located the requested physical device : " <<  this->currentPhysicalDeviceName << std::endl;
     }
+
+    std::cout << "Vulkan device initialized." << std::endl;
 };
 
 VulkanDevice::~VulkanDevice() {
@@ -26,24 +26,21 @@ VulkanDevice::~VulkanDevice() {
 }
 
 bool VulkanDevice::hasPresentQueue(const VkSurfaceKHR surface) {
-    std::cout << "Checking for physical device present queue support: ";
+    std::cout << "Checking for physical device present queue support.";
+
     VkBool32 presentSupport{false};
-   for (uint32_t i = 0; i < physicalDeviceCount; i++) {
-       vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
-       if (presentSupport) {
+    for (uint32_t i = 0; i < physicalDeviceCount; i++) {
+       vkGetPhysicalDeviceSurfaceSupportKHR(currentPhysicalDevice, i, surface, &presentSupport);
+        if (presentSupport) {
            presentQueueFamilyIndex = i;
-           std::cout << "The physical device support present queue,index : " << presentQueueFamilyIndex << std::endl;
-           break;
+            break;
        }
    }
-    if (!presentSupport) {
-        std::cout << "the physical device doesn't support present queue! " << std::endl;
-    }
     return presentSupport;
 };
 
 void VulkanDevice::createDevice() {
-    std::cout << "Creating Vulkan device!" << std::endl;
+    std::cout << "Creating Vulkan device ..." << std::endl;
     selectSuitablePhysicalDevice();
     createLogicalDevice();
     std::cout << "Created vulkan device." << std::endl;
@@ -52,57 +49,56 @@ void VulkanDevice::createDevice() {
 void VulkanDevice::selectSuitablePhysicalDevice() {
     //Use the preferred physical device
     if (preferredPhysicalDevice != VK_NULL_HANDLE) {
-        physicalDevice = preferredPhysicalDevice;
+        currentPhysicalDevice = preferredPhysicalDevice;
         std::cout << "Selected suitable physical device: " << currentPhysicalDeviceName << std::endl;
         return;
     }
 //Search for a suitable physical device
     vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
-
     if (physicalDeviceCount == 0) {
-        std::cerr << "Failed to find GPUs with Vulkan support!" << std::endl;
+        throw std::runtime_error("Failed to find physical devices with Vulkan support!");
         return;
     }
-
     std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
     vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data());
 
+
+    //Evaluate/score physical devices
     unsigned int highestScore{0};
     VkPhysicalDevice bestDevice{VK_NULL_HANDLE};
-
     std::cout << "Searching for suitable physical device: "<< std::endl;
     for (const auto& currentDevice : physicalDevices) {
         unsigned int currentScore{0};
 
+        //Get physical device properties
         VkPhysicalDeviceProperties deviceProperties;
         vkGetPhysicalDeviceProperties(currentDevice, &deviceProperties);
         VkPhysicalDeviceFeatures deviceFeatures;
         vkGetPhysicalDeviceFeatures(currentDevice, &deviceFeatures);
         std::cout << "Checking " << "(" << deviceProperties.deviceID << ")" << deviceProperties.deviceName << ":" << std::flush;
 
+        //Get graphics queue support
         uint32_t queueFamilyCount{0};
         vkGetPhysicalDeviceQueueFamilyProperties(currentDevice, &queueFamilyCount, nullptr);
         std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
         vkGetPhysicalDeviceQueueFamilyProperties(currentDevice, &queueFamilyCount, queueFamilyProperties.data());
         bool hasGraphicsQueue = false;
-        bool hasPresentQueue = false;
         int i{0};
 
-        //Get queue family proprieties for surface and graphics
         for (const auto& queueFamily : queueFamilyProperties) {
             if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 graphicsQueueFamilyIndex = i;
                 hasGraphicsQueue = true;
                 std::cout << "found a graphics queue, "<< std::flush;
             }
-
             ++i;
         }
         if (!hasGraphicsQueue || !deviceFeatures.geometryShader) {
-            std::cout << "missing geometry shader feature or there is no graphics queue, "<< std::flush;
-            continue;
+           currentScore = 0;
+           throw std::runtime_error("Missing geometry shader feature or there is no graphics queue!");
+        }else {
+            std::cout << "found the geometry shader feature, "<< std::flush;
         }
-        std::cout << "found the geometry shader feature, "<< std::flush;
 
         currentScore += deviceProperties.limits.maxImageDimension2D;
         std::cout << "the max texture size is: " << deviceProperties.limits.maxImageDimension2D  << ", "<< std::flush;
@@ -113,7 +109,9 @@ void VulkanDevice::selectSuitablePhysicalDevice() {
         }else {
             std::cout << "the GPU is an integrated device" << std::flush;
         }
-        std::cout << " Check for " << deviceProperties.deviceName << "is over. Final score is:" << currentScore << std::endl;
+        std::cout << " Check for: " << "\"" <<deviceProperties.deviceName << "\" " << "is over. Final score is:" << currentScore << std::endl;
+
+        //Final scoring
         if (currentScore > highestScore) {
             highestScore = currentScore;
             bestDevice = currentDevice;
@@ -122,24 +120,24 @@ void VulkanDevice::selectSuitablePhysicalDevice() {
     }
 
     if (bestDevice == VK_NULL_HANDLE) {
-        std::cerr << "Failed to find a suitable GPU that meets the 3D rendering requirements!" << std::endl;
+       throw std::runtime_error("Failed to find a suitable physical device!");
     }else {
-        physicalDevice = bestDevice;
-        std::cout << "Selected suitable physical device: " << currentPhysicalDeviceName << std::endl;
+        currentPhysicalDevice = bestDevice;
+        std::cout << "Selected suitable physical device: " << "\"" <<currentPhysicalDeviceName << "\"" << std::endl;
     }
 };
 
 void VulkanDevice::createLogicalDevice() {
-    if (physicalDevice == VK_NULL_HANDLE) {
+    if (currentPhysicalDevice == VK_NULL_HANDLE) {
         std::cerr << "Cannot create logical device: No physical device selected!" << std::endl;
         return;
     }
     std::cout << "Creating logical device..." << std::endl;
 
     uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+    vkGetPhysicalDeviceQueueFamilyProperties(currentPhysicalDevice, &queueFamilyCount, nullptr);
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(currentPhysicalDevice, &queueFamilyCount, queueFamilies.data());
 
     bool foundGraphicsQueue = false;
     for (uint32_t i = 0; i < queueFamilies.size(); i++) {
@@ -174,7 +172,7 @@ void VulkanDevice::createLogicalDevice() {
     createInfo.ppEnabledExtensionNames = nullptr;
     createInfo.enabledLayerCount = 0;
 
-    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &logicalDevice) != VK_SUCCESS) {
+    if (vkCreateDevice(currentPhysicalDevice, &createInfo, nullptr, &logicalDevice) != VK_SUCCESS) {
         std::cerr << "Failed to create logical device!" << std::endl;
         return;
     }

@@ -1,9 +1,21 @@
 #include "../../include/vulkanLogic/VulkanInstance.h"
 
-
 VulkanInstance::VulkanInstance(const std::string& appName, const unsigned int appVersion) {
-    std::cout << "Creating Vulkan instance for " << appName << std::endl;
+    std::cout << "Creating Vulkan instance for: " << "\"" << appName  << "\"..."<< std::endl;
 
+    //GLFW info
+    std::cout << "Checking GLFW status..." << std::endl;
+    if (!glfwInit()) {
+        throw std::runtime_error("Failed to initialize GLFW");
+    }else {
+        //Setting GLFW to use the Vulkan API
+        glfwWindowHint(GLFW_CLIENT_API,GLFW_NO_API);
+        std::cout << "GLFW initialized!" << std::endl;
+    }
+    uint32_t glfwExtensionCount{0};
+    const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+    //Application info
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = appName.c_str();
@@ -12,15 +24,7 @@ VulkanInstance::VulkanInstance(const std::string& appName, const unsigned int ap
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
 
-    if (!glfwInit()) {
-        throw std::runtime_error("Failed to initialize glfw");
-    }else {
-        std::cout << "glfw initialized!" << std::endl;
-        glfwWindowHint(GLFW_CLIENT_API,GLFW_NO_API);
-    }
-    uint32_t glfwExtensionCount{0};
-    const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
+    //Instance create info
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
@@ -31,16 +35,14 @@ VulkanInstance::VulkanInstance(const std::string& appName, const unsigned int ap
     createInfo.pNext = nullptr;
 
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-        std::cerr << "Failed to create Vulkan instance!\n";
+       throw std::runtime_error("Failed to create Vulkan instance!");
     } else {
-        std::cout << "Created Vulkan instance of " << appName << std::endl;
+        std::cout << "Created Vulkan instance of: "<< "\"" << appName  << "\"..."<< std::endl;
     }
 }
 
 VulkanInstance::~VulkanInstance() {
-    if (instance != VK_NULL_HANDLE) {
-        vkDestroyInstance(instance, nullptr);
+    vkDestroyInstance(instance, nullptr);
         instance = VK_NULL_HANDLE;
         std::cout << "Destroyed Vulkan instance!" << std::endl;
     }
-}
